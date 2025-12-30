@@ -1,46 +1,96 @@
 import streamlit as st
 from streamlit_mic_recorder import speech_to_text
+from streamlit_lottie import st_lottie
 from openai import OpenAI
 from gtts import gTTS
 import base64
+import requests
 import os
 
-# --- PAGE UI ---
-st.set_page_config(page_title="NeuralFlex AI", page_icon="🧠")
-st.title("🧠 NeuralFlex AI Assistant")
-st.write("Click the mic and say 'Nexa' followed by your question!")
+# --- 1. PAGE CONFIG & UI THEME ---
+st.set_page_config(page_title="NeuralFlex AI", page_icon="🧠", layout="centered")
 
-# --- AUTH SETUP ---
-# On the web, we use st.secrets instead of .env for security
+# Custom CSS for a sleek, modern look
+st.markdown("""
+<style>
+    .stApp {
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: white;
+    }
+    .stButton > button {
+        border-radius: 20px;
+        background: linear-gradient(45deg, #00c6ff, #0072ff);
+        color: white;
+        transition: 0.3s;
+        border: none;
+    }
+    .stButton > button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px #00c6ff;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 2. AUTH & ASSETS ---
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
 
+def load_lottie(url):
+    r = requests.get(url)
+    return r.json() if r.status_code == 200 else None
+
+# --- 3. HELPER FUNCTIONS ---
 def speak_web(text):
-    """Generates audio and plays it in the user's browser"""
     tts = gTTS(text=text, lang='en')
     tts.save("speech.mp3")
     with open("speech.mp3", "rb") as f:
         data = f.read()
         b64 = base64.b64encode(data).decode()
-        # HTML to make it play automatically
         md = f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">'
         st.markdown(md, unsafe_allow_html=True)
 
-# --- THE MICROPHONE ---
-# This button works on Mobile (Safari/Chrome) and PC
-text = speech_to_text(language='en', start_prompt="🎤 Start Talking", stop_prompt="🛑 Stop")
+# --- 4. SESSION STATE (Chat History) ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# --- 5. MAIN UI ---
+lottie_ai = load_lottie("https://lottie.host/9e4d0d3a-1e9b-4f9e-a8f8-8f8e8f8e8f8e/abc.json") # Replace with real URL
+st_lottie(lottie_ai, height=150)
+
+st.title("NeuralFlex Assistant")
+
+# Display previous chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# --- 6. VOICE INPUT ---
+# Center the microphone button using columns
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    text = speech_to_text(language='en', start_prompt="🎤 Speak to Nexa", stop_prompt="🛑 Stop")
 
 if text:
-    st.write(f"**You:** {text}")
+    # Add User message to chat
+    st.session_state.messages.append({"role": "user", "content": text})
+    with st.chat_message("user"):
+        st.write(text)
+
+    # Process if wake word 'Nexa' is found
     if "nexa" in text.lower():
-        clean_text = text.lower().replace("Nexa", "").strip()
-        with st.spinner("Nexa is thinking..."):
-            response = client.chat.completions.create(
-                model="openai/gpt-3.5-turbo",
-                messages=[{"role": "user", "content": clean_text}]
-            )
-            answer = response.choices[0].message.content
-        st.write(f"**Nexa:** {answer}")
-        speak_web(answer)
+        clean_text = text.lower().replace("nexa", "").strip()
+        
+        with st.chat_message("assistant"):
+            with st.spinner("Nexa is thinking..."):
+                response = client.chat.completions.create(
+                    model="openai/gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": clean_text}]
+                )
+                answer = response.choices[0].message.content
+                st.markdown(answer)
+                speak_web(answer)
+                
+        # Save Assistant message
+        st.session_state.messages.append({"role": "assistant", "content": answer})

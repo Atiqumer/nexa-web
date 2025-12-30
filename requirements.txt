@@ -1,4 +1,6 @@
 streamlit
 streamlit-mic-recorder
+streamlit-lottie
 openai
 gTTS
+requests
