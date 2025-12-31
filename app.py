@@ -1,6 +1,5 @@
 import streamlit as st
 from streamlit_mic_recorder import speech_to_text
-from streamlit_lottie import st_lottie
 from openai import OpenAI
 from gtts import gTTS
 import base64
@@ -9,17 +8,14 @@ import uuid
 import os
 
 # =========================================================
-# CONFIG
+# CONFIG & AUTH
 # =========================================================
-st.set_page_config(
-    page_title="NeuralFlex",
-    page_icon="🌙",
-    layout="centered"
-)
+st.set_page_config(page_title="NeuralFlex Pro", page_icon="🌙", layout="centered")
 
-MODEL = "openai/gpt-4o-mini"
+MODEL = "openai/gpt-4o-mini"  # High-performance standard model
 WAKE_WORDS = ["alexa", "nexa"]
 
+# OpenRouter setup
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
@@ -28,49 +24,35 @@ client = OpenAI(
 # =========================================================
 # HELPERS
 # =========================================================
-def load_lottie(url):
-    try:
-        r = requests.get(url, timeout=10)
-        return r.json() if r.status_code == 200 else None
-    except:
-        return None
-
-
 def speak(text):
+    """Generates and autoplays audio in the browser"""
     try:
         fname = f"speech_{uuid.uuid4().hex}.mp3"
         gTTS(text=text, lang="en").save(fname)
         with open(fname, "rb") as f:
-            audio = base64.b64encode(f.read()).decode()
+            audio_b64 = base64.b64encode(f.read()).decode()
         st.markdown(
-            f"<audio autoplay src='data:audio/mp3;base64,{audio}'></audio>",
+            f"<audio autoplay src='data:audio/mp3;base64,{audio_b64}'></audio>",
             unsafe_allow_html=True
         )
         os.remove(fname)
     except Exception as e:
-        st.error(e)
-
+        st.error(f"Audio Error: {e}")
 
 def extract_command(text):
+    """Detects wake words and returns the query"""
     t = text.lower()
     for w in WAKE_WORDS:
         if w in t:
-            return t.replace(w, "").strip()
+            return t.split(w)[-1].strip()
     return None
 
-
 # =========================================================
-# STATE
-# =========================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# =========================================================
-# STYLES — PREMIUM UI
+# PREMIUM CHATGPT-STYLE UI
 # =========================================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap');
 
 * { font-family: 'Space Grotesk', sans-serif; }
 
@@ -79,137 +61,120 @@ st.markdown("""
     color: white;
 }
 
-/* Hide Streamlit button */
-div.stButton > button {
-    opacity: 0;
-    height: 0;
-    width: 0;
+/* ChatGPT Voice Orb Styling */
+.orb-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 0;
+    position: relative;
 }
 
-/* Orb */
-.orb {
+.voice-orb {
     width: 140px;
     height: 140px;
-    margin: auto;
-    border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
-    box-shadow:
-        0 0 40px rgba(124,58,237,.8),
-        inset 0 0 30px rgba(255,255,255,.2);
-    animation: float 4s ease-in-out infinite;
+    border-radius: 50%;
+    box-shadow: 0 0 50px rgba(124, 58, 237, 0.5);
+    animation: breathe 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+/* Ripple Animation */
+.voice-orb::after {
+    content: '';
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid #7c3aed;
+    animation: ripple 2s linear infinite;
+    z-index: 0;
+}
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); }
+    50% { transform: scale(1.08); box-shadow: 0 0 70px rgba(124, 58, 237, 0.8); }
+}
+
+@keyframes ripple {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+/* Hide the actual speech_to_text button and overlay it on the Orb */
+div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+div.stButton > button {
+    width: 150px !important;
+    height: 150px !important;
+    opacity: 0 !important; /* Makes the functional button invisible */
     cursor: pointer;
 }
 
-@keyframes float {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-14px); }
-}
-
-/* Waveform */
-.wave {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 25px;
-}
-
-.wave span {
-    width: 6px;
-    height: 20px;
-    background: linear-gradient(#a78bfa, #7c3aed);
-    border-radius: 6px;
-    animation: wave 1.2s infinite ease-in-out;
-}
-
-.wave span:nth-child(odd) { animation-delay: .2s }
-.wave span:nth-child(even) { animation-delay: .4s }
-
-@keyframes wave {
-    0% { height: 18px; opacity: .6; }
-    50% { height: 48px; opacity: 1; }
-    100% { height: 18px; opacity: .6; }
-}
-
-/* Status */
-.status {
-    text-align: center;
-    margin-top: 16px;
-    letter-spacing: .1em;
-    opacity: .8;
-}
-
-/* Chat bubbles */
+/* Glassmorphism Chat */
 [data-testid="stChatMessage"] {
-    background: rgba(255,255,255,.05);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 18px;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# HEADER
+# MAIN APP FLOW
 # =========================================================
 st.title("🌙 NeuralFlex")
-st.caption("Neural Voice Interface")
+st.caption("Next-Gen Voice Intelligence")
 
-# =========================================================
-# CHAT
-# =========================================================
-for m in st.session_state.messages:
-    with st.chat_message(m["role"], avatar="🤖" if m["role"]=="assistant" else "👤"):
-        st.markdown(m["content"])
+# 1. Load Chat History
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# =========================================================
-# ORB UI
-# =========================================================
-st.markdown("""
-<div class="orb" onclick="document.getElementById('mic-btn').click()"></div>
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"], avatar="🤖" if msg["role"]=="assistant" else "👤"):
+        st.markdown(msg["content"])
 
-<div class="wave">
-  <span></span><span></span><span></span><span></span>
-  <span></span><span></span><span></span><span></span>
-</div>
+# 2. Render Orb UI
+st.markdown('<div class="orb-container"><div class="voice-orb"></div></div>', unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; opacity: 0.6;'>Tap the orb & say \"Alexa\"</p>", unsafe_allow_html=True)
 
-<div class="status">Tap the orb & say “Alexa”</div>
-""", unsafe_allow_html=True)
+# 3. Hidden Microphone Trigger
+# This functional button is perfectly centered over the visual Orb
+text = speech_to_text(language="en", just_once=True, key="voice_trigger")
 
-# =========================================================
-# HIDDEN MIC TRIGGER
-# =========================================================
-st.button("hidden", key="mic-btn")
-
-text = speech_to_text(
-    language="en",
-    just_once=True,
-    key="voice"
-)
-
-# =========================================================
-# LOGIC
-# =========================================================
+# 4. Processing Logic
 if text:
     st.session_state.messages.append({"role": "user", "content": text})
+    with st.chat_message("user", avatar="👤"):
+        st.markdown(text)
 
     command = extract_command(text)
-
+    
     if not command:
-        msg = "🌙 Say **Alexa** or **Nexa** followed by your request."
-        st.session_state.messages.append({"role": "assistant", "content": msg})
-        with st.chat_message("assistant"):
-            st.markdown(msg)
+        response_msg = "🌙 I'm listening. Please start your request with **Alexa** or **Nexa**."
+        st.session_state.messages.append({"role": "assistant", "content": response_msg})
+        with st.chat_message("assistant", avatar="🤖"):
+            st.markdown(response_msg)
     else:
-        with st.chat_message("assistant"):
-            with st.spinner("⚡ Neural processing..."):
-                r = client.chat.completions.create(
-                    model=MODEL,
-                    messages=st.session_state.messages,
-                    temperature=0.6
-                )
-                ans = r.choices[0].message.content
-                st.markdown(ans)
-                speak(ans)
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": ans}
-                )
+        with st.chat_message("assistant", avatar="🤖"):
+            with st.spinner("⚡ Processing Neural Patterns..."):
+                try:
+                    chat_completion = client.chat.completions.create(
+                        model=MODEL,
+                        messages=st.session_state.messages,
+                        temperature=0.7
+                    )
+                    ans = chat_completion.choices[0].message.content
+                    st.markdown(ans)
+                    speak(ans) # Voice output
+                    st.session_state.messages.append({"role": "assistant", "content": ans})
+                except Exception as e:
+                    st.error(f"Neural Link Error: {e}")
