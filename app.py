@@ -9,10 +9,10 @@ import os
 # =========================================================
 # CONFIG & AUTH
 # =========================================================
-st.set_page_config(page_title="NeuralFlex Pro", page_icon="🌙", layout="centered")
+st.set_page_config(page_title="Anexa Voice Assistant", page_icon="🧠", layout="centered")
 
 MODEL = "openai/gpt-4o-mini"
-WAKE_WORDS = ["alexa", "nexa"]
+WAKE_WORDS = ["anexa", "nexa"]
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -130,7 +130,7 @@ div.stButton > button {
 # =========================================================
 # MAIN APP FLOW
 # =========================================================
-st.title("🌙 NeuralFlex Pro")
+st.title("〰️ ANEXA Voice Assistant")
 st.caption("Advanced Voice AI System")
 
 if "messages" not in st.session_state:
@@ -144,7 +144,7 @@ for msg in st.session_state.messages:
 
 # Render Interactive UI
 st.markdown('<div class="orb-container"><div class="voice-orb"></div></div>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; opacity: 0.7;'>Tap the Orb & say <b>\"Alexa\"</b></p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; opacity: 0.7;'>Tap the Start Recording & say <b>\"Anexa\"</b></p>", unsafe_allow_html=True)
 
 # Functional Mic Trigger
 text = speech_to_text(language="en", just_once=True, key="voice_trigger")
@@ -157,7 +157,7 @@ if text:
     command = extract_command(text)
     
     if not command:
-        resp = "🌙 I'm listening. Use **Alexa** or **Nexa** to give a command."
+        resp = "💡 I'm listening. Use **Anexa**  to give a command."
         st.session_state.messages.append({"role": "assistant", "content": resp})
         with st.chat_message("assistant", avatar=":material/smart_toy:"):
             st.markdown(resp)
