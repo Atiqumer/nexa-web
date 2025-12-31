@@ -2,7 +2,6 @@
 
 <div align="center">
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_svg.svg)](https://nexa-web.streamlit.app/)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Framework-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +9,7 @@
 
 **A sleek, intelligent, and responsive AI-powered voice assistant built for the web.** *Bridging the gap between human voice and AI intelligence.*
 
-[Explore the App](https://nexa-web.streamlit.app/) • [Report Bug](https://github.com/Atiqumer/nexa-web/issues) • [Request Feature](https://github.com/Atiqumer/nexa-web/issues)
+[Visit the App](https://nexa-web.streamlit.app/) • [Report Bug](https://github.com/Atiqumer/nexa-web/issues) • [Request Feature](https://github.com/Atiqumer/nexa-web/issues)
 
 </div>
 
@@ -24,7 +23,8 @@
 
 | Interface Overview | Live Interaction |
 | :---: | :---: |
-| <img src="Screenshot%202025-12-31%20224005.png" width="100%" alt="Dashboard Overview"> | <img src="Screenshot%202025-12-31%20224128.png" width="100%" alt="Chat Interaction"> |
+| <img src="Screenshot%202025-12-31%20224005.png" width="100%" alt="Dashboard Overview"> 
+| <img src="Screenshot%202025-12-31%20224128.png" width="100%" alt="Chat Interaction"> |
 
 ---
 
