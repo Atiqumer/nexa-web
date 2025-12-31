@@ -20,10 +20,10 @@
 
 ### 🎥 Visual Preview
 
-| Interface Overview | Live Interaction |
-| :---: | :---: |
+| Interface Overview 
 | <img src="Screenshot%202025-12-31%20224005.png" width="100%" alt="Dashboard Overview"> 
-| <img src="Screenshot%202025-12-31%20224128.png" width="100%" alt="Chat Interaction"> |
+
+| <img src="Screenshot%202025-12-31%20224128.png" width="100%" alt="Chat Interaction"> 
 
 ---
 
@@ -91,3 +91,58 @@ nexa-web/
 ├── requirements.txt    # Project dependencies
 ├── Screenshot...png    # Visual documentation
 └── .gitignore          # Files excluded from version control
+```
+
+## 💡 Usage
+
+Once the application is running, follow these steps to interact with Nexa:
+
+1. **Permissions:** Ensure your browser has permission to access your microphone.
+2. **Activation:** Click the "Listen" button or use the designated trigger to start recording.
+3. **Commanding:** Speak clearly. You can ask for information, general chat, or specific tasks.
+4. **Feedback:** View the transcribed text on the screen and listen to the AI's verbal response.
+
+---
+
+## 🗺️ Roadmap
+
+Future updates planned for Nexa Web:
+
+- [ ] **Multi-language Support:** Expand beyond English to support Spanish, Urdu, and French.
+- [ ] **Custom AI Personas:** Allow users to choose different "voices" and personality types.
+- [ ] **Integration with APIs:** Add support for Weather, Google Calendar, and Spotify.
+- [ ] **History Logs:** Save past conversations for easy reference later.
+- [ ] **Enhanced Visuals:** Add real-time waveform animations during voice capture.
+
+---
+
+## 🛠️ Troubleshooting
+
+- **Microphone not detected:** Ensure no other app is using the mic and check browser site settings.
+- **Latency issues:** A stable internet connection is required for the speech-to-text API processing.
+- **Dependencies Error:** If installation fails, try upgrading pip: `pip install --upgrade pip`.
+
+
+---
+
+---
+
+## 🤝 Connect With Me
+
+<div align="center">
+
+### Atiq Umer
+**AI Developer | Full Stack Engineer | Open Source Contributor**
+
+Ready to collaborate on innovative AI projects or discuss the future of web-based voice assistants.
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/atiqumer/)
+[![Gmail](https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:atiqumer15@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Atiqumer)
+[![Portfolio](https://img.shields.io/badge/Portfolio-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)]([https://nexa-web.streamlit.app/](https://atiqumer-portfolio.netlify.app/))
+
+---
+
+**Let's build something intelligent together!**
+
+</div>
