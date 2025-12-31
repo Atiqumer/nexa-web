@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 MODEL_NAME = "openai/gpt-4o-mini"
-WAKE_WORDS = ["alexa", "nexa"]
+WAKE_WORDS = ["alexa"]
 
 # =========================================================
 # 2. OPENROUTER CLIENT
@@ -32,18 +32,21 @@ client = OpenAI(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "listening" not in st.session_state:
+    st.session_state.listening = False
+
 # =========================================================
 # 4. HELPERS
 # =========================================================
-def extract_command(text):
+def extract_command(text: str):
     text = text.lower()
-    for word in WAKE_WORDS:
-        if word in text:
-            return text.replace(word, "").strip()
+    for w in WAKE_WORDS:
+        if w in text:
+            return text.replace(w, "").strip()
     return None
 
 
-def speak(text):
+def speak(text: str):
     filename = f"speech_{uuid.uuid4().hex}.mp3"
     gTTS(text=text, lang="en").save(filename)
 
@@ -62,7 +65,7 @@ def speak(text):
     os.remove(filename)
 
 # =========================================================
-# 5. COZY UI STYLE
+# 5. PREMIUM COZY UI (NO BUTTON)
 # =========================================================
 st.markdown("""
 <style>
@@ -75,81 +78,81 @@ st.markdown("""
     color: #eaeaff;
 }
 
-.cozy-card {
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(18px);
-    border-radius: 28px;
-    padding: 35px;
-    border: 1px solid rgba(167,139,250,0.25);
-    box-shadow: 0 0 45px rgba(139,92,246,0.25);
+/* Card */
+.neural-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(22px);
+    border-radius: 32px;
+    padding: 45px 30px;
     max-width: 420px;
-    margin: auto;
+    margin: 40px auto;
+    box-shadow: 0 0 90px rgba(139,92,246,0.35);
+    border: 1px solid rgba(167,139,250,0.25);
 }
 
-.orb {
-    width: 140px;
-    height: 140px;
+/* Orb */
+.neural-orb {
+    width: 170px;
+    height: 170px;
     margin: auto;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
-    box-shadow: 0 0 40px #8b5cf6;
-    animation: float 4s ease-in-out infinite;
+    box-shadow:
+        0 0 60px rgba(139,92,246,0.9),
+        inset 0 0 40px rgba(255,255,255,0.35);
+    animation: breathe 4s ease-in-out infinite;
+    cursor: pointer;
 }
 
-@keyframes float {
-    0%,100% { transform: translateY(0px); }
-    50% { transform: translateY(-14px); }
+@keyframes breathe {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
 }
 
-.wave {
+.neural-orb.listening {
+    animation: pulse 1s infinite;
+    box-shadow: 0 0 70px rgba(239,68,68,1);
+}
+
+@keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* Waveform */
+.waveform {
     display: flex;
     justify-content: center;
-    gap: 6px;
+    gap: 7px;
     height: 70px;
-    margin: 25px 0;
+    margin: 35px 0 10px;
 }
 
-.wave span {
-    width: 6px;
+.waveform span {
+    width: 7px;
     background: linear-gradient(#a78bfa, #7c3aed);
     border-radius: 10px;
-    animation: wave 1.2s infinite ease-in-out;
+    animation: wave 1.4s infinite ease-in-out;
+    opacity: 0.75;
 }
 
-.wave span:nth-child(odd) { animation-delay: .2s; }
-.wave span:nth-child(even) { animation-delay: .4s; }
+.waveform span:nth-child(odd) { animation-delay: .2s; }
+.waveform span:nth-child(even) { animation-delay: .5s; }
 
 @keyframes wave {
-    0%,100% { height: 20%; opacity: .5; }
-    50% { height: 100%; opacity: 1; }
+    0%,100% { height: 25%; }
+    50% { height: 100%; }
 }
 
-.mic-btn {
-    width: 90px;
-    height: 90px;
-    margin: auto;
-    border-radius: 50%;
-    background: radial-gradient(circle, #f472b6, #ec4899);
-    box-shadow: 0 0 25px #ec4899;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 34px;
-    cursor: pointer;
-    transition: transform .2s ease;
-}
-
-.mic-btn:hover {
-    transform: scale(1.1);
-}
-
+/* Status */
 .status {
     text-align: center;
-    margin-top: 15px;
-    letter-spacing: .1em;
-    opacity: .85;
+    font-size: 0.85rem;
+    letter-spacing: .14em;
+    opacity: .8;
 }
 
+/* Hide Streamlit button */
 [data-testid="stButton"] button {
     display: none;
 }
@@ -160,7 +163,7 @@ st.markdown("""
 # 6. HEADER
 # =========================================================
 st.markdown("<h1 style='text-align:center'>🌙 NeuralFlex</h1>", unsafe_allow_html=True)
-st.caption("Cozy Neural Voice Interface")
+st.caption("A cozy neural voice companion")
 
 # =========================================================
 # 7. CHAT HISTORY
@@ -170,32 +173,28 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # =========================================================
-# 8. COZY VOICE UI
+# 8. ORB INTERFACE (NO BUTTON)
 # =========================================================
 st.markdown("""
-<div class="cozy-card">
-    <div class="orb"></div>
+<div class="neural-card">
+    <div class="neural-orb" id="orb"></div>
 
-    <div class="wave">
+    <div class="waveform">
         <span></span><span></span><span></span>
         <span></span><span></span><span></span>
         <span></span>
     </div>
 
-    <div class="mic-btn" onclick="document.getElementById('hidden').click()">
-        🎙️
-    </div>
-
     <div class="status" id="statusText">
-        Tap to speak (say Alexa or Nexa)
+        Click the orb and say “Alexa” ”
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# 9. HIDDEN BUTTON + SPEECH INPUT
+# 9. HIDDEN RECORDER
 # =========================================================
-st.button("hidden", key="hidden")
+st.button("hidden_recorder", key="hidden_recorder")
 
 text = speech_to_text(
     language="en",
@@ -203,16 +202,13 @@ text = speech_to_text(
     key="voice"
 )
 
-# =========================================================
-# 10. MAIN LOGIC
-# =========================================================
 if text:
     st.session_state.messages.append({"role": "user", "content": text})
 
     command = extract_command(text)
 
     if not command:
-        reply = "🌙 Please say **Alexa** or **Nexa** before your command."
+        reply = "🌙 Please wake me by saying **Alexa** ."
         st.session_state.messages.append({"role": "assistant", "content": reply})
         with st.chat_message("assistant", avatar="🤖"):
             st.markdown(reply)
@@ -235,12 +231,18 @@ if text:
 
 st.markdown("""
 <script>
+const orb = document.getElementById("orb");
 const status = document.getElementById("statusText");
-const mic = document.querySelector(".mic-btn");
 
-mic.addEventListener("click", () => {
+orb.addEventListener("click", () => {
     status.innerText = "Listening...";
-    mic.style.boxShadow = "0 0 40px #ef4444";
+    orb.classList.add("listening");
+    document.getElementById("hidden_recorder").click();
+
+    setTimeout(() => {
+        orb.classList.remove("listening");
+        status.innerText = "Processing...";
+    }, 3500);
 });
 </script>
 """, unsafe_allow_html=True)
