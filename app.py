@@ -28,16 +28,25 @@ st.markdown("""
 
 # --- LOADING THE ORB ANIMATION ---
 def load_lottie(url):
-    return requests.get(url).json()
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except Exception:
+        return None
 
 # A "Breathing" sphere animation for a professional look
-lottie_orb = load_lottie("https://lottie.host/df32c1c6-3023-455a-9f5b-513697e87600/1X6M6s9S7V.json")
+lottie_url = "https://lottie.host/70366657-3069-42b4-84d7-0130985559c5/X6fB1tJk2f.json"
+lottie_orb = load_lottie(lottie_url)
 
 with st.container():
-    st.write("") # Spacer
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        st_lottie(lottie_orb, height=200, key="breathing_orb")
+        if lottie_orb:
+            st_lottie(lottie_orb, height=200, key="breathing_orb")
+        else:
+            st.markdown("### 🧠")
         # The trigger remains a subtle, professional text-action
         text = speech_to_text(language='en', start_prompt="🎤 Listening...", stop_prompt="Processing...", just_once=True)
 
