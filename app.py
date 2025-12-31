@@ -1,15 +1,19 @@
 import streamlit as st
 from streamlit_mic_recorder import speech_to_text
+from streamlit_lottie import st_lottie
 from openai import OpenAI
 from gtts import gTTS
-import uuid, base64, os
+import base64
+import requests
+import uuid
+import os
 
-# ======================================================
+# =========================================================
 # CONFIG
-# ======================================================
+# =========================================================
 st.set_page_config(
     page_title="NeuralFlex",
-    page_icon="🟣",
+    page_icon="🌙",
     layout="centered"
 )
 
@@ -21,34 +25,32 @@ client = OpenAI(
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
 
-# ======================================================
-# SESSION STATE
-# ======================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# =========================================================
+# HELPERS
+# =========================================================
+def load_lottie(url):
+    try:
+        r = requests.get(url, timeout=10)
+        return r.json() if r.status_code == 200 else None
+    except:
+        return None
 
-# ======================================================
-# AUDIO OUTPUT
-# ======================================================
+
 def speak(text):
-    filename = f"voice_{uuid.uuid4().hex}.mp3"
-    gTTS(text=text, lang="en").save(filename)
-    audio = open(filename, "rb").read()
-    b64 = base64.b64encode(audio).decode()
-    os.remove(filename)
+    try:
+        fname = f"speech_{uuid.uuid4().hex}.mp3"
+        gTTS(text=text, lang="en").save(fname)
+        with open(fname, "rb") as f:
+            audio = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"<audio autoplay src='data:audio/mp3;base64,{audio}'></audio>",
+            unsafe_allow_html=True
+        )
+        os.remove(fname)
+    except Exception as e:
+        st.error(e)
 
-    st.markdown(
-        f"""
-        <audio autoplay>
-            <source src="data:audio/mp3;base64,{b64}">
-        </audio>
-        """,
-        unsafe_allow_html=True
-    )
 
-# ======================================================
-# COMMAND EXTRACTION
-# ======================================================
 def extract_command(text):
     t = text.lower()
     for w in WAKE_WORDS:
@@ -56,145 +58,158 @@ def extract_command(text):
             return t.replace(w, "").strip()
     return None
 
-# ======================================================
-# PREMIUM UI (CSS)
-# ======================================================
+
+# =========================================================
+# STATE
+# =========================================================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# =========================================================
+# STYLES — PREMIUM UI
+# =========================================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
 
 * { font-family: 'Space Grotesk', sans-serif; }
 
 .stApp {
-    background: radial-gradient(circle at top, #1b1f3b, #070b1f);
+    background: radial-gradient(circle at top, #1b1f3b, #05060f);
     color: white;
 }
 
-.card {
-    width: 420px;
-    margin: 70px auto;
-    padding: 45px 30px;
-    border-radius: 32px;
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(167,139,250,0.25);
-    box-shadow: 0 0 120px rgba(139,92,246,0.4);
-    text-align: center;
+/* Hide Streamlit button */
+div.stButton > button {
+    opacity: 0;
+    height: 0;
+    width: 0;
 }
 
-/* ORB */
+/* Orb */
 .orb {
-    width: 170px;
-    height: 170px;
-    margin: 0 auto 25px;
+    width: 140px;
+    height: 140px;
+    margin: auto;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
     box-shadow:
-        0 0 80px rgba(139,92,246,1),
-        inset 0 0 45px rgba(255,255,255,0.4);
-    animation: breathe 4s ease-in-out infinite;
+        0 0 40px rgba(124,58,237,.8),
+        inset 0 0 30px rgba(255,255,255,.2);
+    animation: float 4s ease-in-out infinite;
     cursor: pointer;
 }
 
-@keyframes breathe {
-    0%,100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+@keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
 }
 
-/* WAVEFORM */
-.waveform {
+/* Waveform */
+.wave {
     display: flex;
     justify-content: center;
-    gap: 7px;
-    height: 60px;
-    margin: 18px 0;
+    gap: 6px;
+    margin-top: 25px;
 }
 
-.waveform span {
-    width: 7px;
-    height: 100%;
+.wave span {
+    width: 6px;
+    height: 20px;
     background: linear-gradient(#a78bfa, #7c3aed);
-    border-radius: 10px;
-    animation: wave 1.1s infinite ease-in-out;
+    border-radius: 6px;
+    animation: wave 1.2s infinite ease-in-out;
 }
 
-.waveform span:nth-child(odd) { animation-delay: .2s }
-.waveform span:nth-child(even) { animation-delay: .4s }
+.wave span:nth-child(odd) { animation-delay: .2s }
+.wave span:nth-child(even) { animation-delay: .4s }
 
 @keyframes wave {
-    0%,100% { height: 25%; opacity: 0.5; }
-    50% { height: 100%; opacity: 1; }
+    0% { height: 18px; opacity: .6; }
+    50% { height: 48px; opacity: 1; }
+    100% { height: 18px; opacity: .6; }
 }
 
-/* STATUS */
+/* Status */
 .status {
-    font-size: 0.85rem;
-    letter-spacing: 0.14em;
-    opacity: 0.85;
+    text-align: center;
+    margin-top: 16px;
+    letter-spacing: .1em;
+    opacity: .8;
 }
 
-/* HIDE STREAMLIT BUTTONS */
-[data-testid="stButton"] {
-    display: none;
+/* Chat bubbles */
+[data-testid="stChatMessage"] {
+    background: rgba(255,255,255,.05);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 18px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ======================================================
-# UI MARKUP
-# ======================================================
+# =========================================================
+# HEADER
+# =========================================================
+st.title("🌙 NeuralFlex")
+st.caption("Neural Voice Interface")
+
+# =========================================================
+# CHAT
+# =========================================================
+for m in st.session_state.messages:
+    with st.chat_message(m["role"], avatar="🤖" if m["role"]=="assistant" else "👤"):
+        st.markdown(m["content"])
+
+# =========================================================
+# ORB UI
+# =========================================================
 st.markdown("""
-<div class="card">
-    <div class="orb" onclick="document.getElementById('hidden-btn').click()"></div>
+<div class="orb" onclick="document.getElementById('mic-btn').click()"></div>
 
-    <div class="waveform">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span><span></span>
-    </div>
-
-    <div class="status">
-        Click the orb and say “Alexa”
-    </div>
+<div class="wave">
+  <span></span><span></span><span></span><span></span>
+  <span></span><span></span><span></span><span></span>
 </div>
+
+<div class="status">Tap the orb & say “Alexa”</div>
 """, unsafe_allow_html=True)
 
-# ======================================================
-# HIDDEN MIC BUTTON
-# ======================================================
-st.button("hidden", key="hidden-btn")
+# =========================================================
+# HIDDEN MIC TRIGGER
+# =========================================================
+st.button("hidden", key="mic-btn")
 
-voice = speech_to_text(
+text = speech_to_text(
     language="en",
     just_once=True,
-    key="mic"
+    key="voice"
 )
 
-# ======================================================
-# MAIN LOGIC
-# ======================================================
-if voice:
-    st.session_state.messages.append(
-        {"role": "user", "content": voice}
-    )
+# =========================================================
+# LOGIC
+# =========================================================
+if text:
+    st.session_state.messages.append({"role": "user", "content": text})
 
-    cmd = extract_command(voice)
+    command = extract_command(text)
 
-    if not cmd:
-        reply = "Say Alexa or Nexa before your command."
-        st.session_state.messages.append(
-            {"role": "assistant", "content": reply}
-        )
-        speak(reply)
-
+    if not command:
+        msg = "🌙 Say **Alexa** or **Nexa** followed by your request."
+        st.session_state.messages.append({"role": "assistant", "content": msg})
+        with st.chat_message("assistant"):
+            st.markdown(msg)
     else:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=st.session_state.messages,
-            temperature=0.6
-        )
-
-        answer = response.choices[0].message.content
-        st.session_state.messages.append(
-            {"role": "assistant", "content": answer}
-        )
-        speak(answer)
+        with st.chat_message("assistant"):
+            with st.spinner("⚡ Neural processing..."):
+                r = client.chat.completions.create(
+                    model=MODEL,
+                    messages=st.session_state.messages,
+                    temperature=0.6
+                )
+                ans = r.choices[0].message.content
+                st.markdown(ans)
+                speak(ans)
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": ans}
+                )
