@@ -45,18 +45,48 @@ st.markdown("""
 client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=st.secrets["OPENROUTER_API_KEY"])
 
 def load_lottie(url):
-    return requests.get(url).json()
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except Exception:
+        return None
 
-# A "Breathing" sphere animation for a professional look
-lottie_orb = load_lottie("https://lottie.host/df32c1c6-3023-455a-9f5b-513697e87600/1X6M6s9S7V.json")
+def speak_web(text):
+    tts = gTTS(text=text, lang='en')
+    tts.save("speech.mp3")
+    with open("speech.mp3", "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+        st.markdown(f'<audio autoplay="true" src="data:audio/mp3;base64,{b64}">', unsafe_allow_html=True)
 
-with st.container():
-    st.write("") # Spacer
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st_lottie(lottie_orb, height=200, key="breathing_orb")
-        # The trigger remains a subtle, professional text-action
-        text = speech_to_text(language='en', start_prompt="🎤 Listening...", stop_prompt="Processing...", just_once=True)
+# --- 4. SESSION STATE ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# --- 5. MAIN UI ---
+# Using a verified working Lottie JSON link
+lottie_url = "https://lottie.host/70366657-3069-42b4-84d7-0130985559c5/X6fB1tJk2f.json"
+lottie_orb = load_lottie(lottie_url)
+
+st.title("🌙 NeuralFlex")
+st.caption("Cozy Edition • Always Listening")
+
+# Display Chat History
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"], avatar="🤖" if msg["role"] == "assistant" else "👤"):
+        st.markdown(msg["content"])
+
+# Interaction Area
+st.write("---")
+col1, col2, col3 = st.columns([1, 1, 1])
+with col2:
+    if lottie_orb:
+        st_lottie(lottie_orb, height=200, key="orb")
+    else:
+        st.markdown("### 🧠")
+    
+    text = speech_to_text(language='en', start_prompt="🎤 Tap to Speak", stop_prompt="Listening...", just_once=True)
 
 # --- 6. LOGIC ---
 if text:
