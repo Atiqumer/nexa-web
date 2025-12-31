@@ -50,9 +50,20 @@ st.markdown("""
                     inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
     }
 
-    /* Hide default button */
+    /* Hide default button but keep it functional */
     div.stButton > button {
-        display: none !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        pointer-events: none !important;
+        height: 0 !important;
+        width: 0 !important;
+    }
+    
+    /* Make button container invisible */
+    div.stButton {
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Title Styling */
@@ -325,11 +336,11 @@ with col2:
         st_lottie(lottie_orb, height=150, key="orb")
         st.markdown('</div>', unsafe_allow_html=True)
     
-    # Live Audio Waveform Visualizer
+    # Live Audio Waveform Visualizer with functional button
     st.markdown("""
-        <div class="waveform-container" id="waveform">
+        <div class="waveform-container" onclick="document.querySelector('[data-testid=\\'stButton\\'] button').click()">
             <div class="pulse-ring"></div>
-            <div class="audio-visualizer">
+            <div class="audio-visualizer" id="visualizer">
                 <div class="bar"></div>
                 <div class="bar"></div>
                 <div class="bar"></div>
@@ -340,18 +351,20 @@ with col2:
                 <div class="bar"></div>
                 <div class="bar"></div>
             </div>
-            <div class="status-text">Ready to Listen</div>
+            <div class="status-text" id="status">Tap to Speak</div>
         </div>
     """, unsafe_allow_html=True)
     
-    # Hidden speech input component
-    text = speech_to_text(
-        language='en',
-        start_prompt="",
-        stop_prompt="",
-        just_once=True,
-        key="voice_input"
-    )
+    # Actual speech input component (hidden but functional)
+    col_a, col_b, col_c = st.columns([1, 1, 1])
+    with col_b:
+        text = speech_to_text(
+            language='en',
+            start_prompt="🎙️",
+            stop_prompt="🔴",
+            just_once=True,
+            key="voice_input"
+        )
 
 # --- 6. LOGIC ---
 if text:
@@ -366,7 +379,7 @@ if text:
             with st.spinner("⚡ Processing neural signals..."):
                 try:
                     response = client.chat.completions.create(
-                        model="google/gemini-2.0-flash-exp",
+                        model="google/gemini-2.5-flash",
                         messages=[{"role": "user", "content": clean_text}]
                     )
                     answer = response.choices[0].message.content
