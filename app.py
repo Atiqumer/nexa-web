@@ -37,6 +37,12 @@ client = OpenAI(
     api_key=st.secrets["OPENROUTER_API_KEY"]
 )
 
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
 def load_lottie(url):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
@@ -56,10 +62,10 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # --- 5. MAIN UI ---
-lottie_ai = load_lottie("https://lottie.host/9e4d0d3a-1e9b-4f9e-a8f8-8f8e8f8e8f8e/abc.json") # Replace with real URL
-st_lottie(lottie_ai, height=150)
+lottie_url = "https://lottie.host/7900b462-811c-4b53-9118-2e0084f6797b/2E351s7VpY.json"# Replace with real URL
+lottie_ai = load_lottieurl(lottie_url)
 
-st.title("NeuralFlex Assistant")
+st.title("NeuralFlex Voice Assistant")
 
 # Display previous chat messages
 for message in st.session_state.messages:
@@ -70,7 +76,7 @@ for message in st.session_state.messages:
 # Center the microphone button using columns
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    text = speech_to_text(language='en', start_prompt="🎤 Speak to Nexa", stop_prompt="🛑 Stop")
+    text = speech_to_text(language='en', start_prompt="🎤 Speak to Alexa", stop_prompt="🛑 Stop")
 
 if text:
     # Add User message to chat
@@ -78,12 +84,12 @@ if text:
     with st.chat_message("user"):
         st.write(text)
 
-    # Process if wake word 'Nexa' is found
-    if "nexa" in text.lower():
-        clean_text = text.lower().replace("nexa", "").strip()
+    # Process if wake word 'Alexa' is found
+    if "Alexa" in text.lower():
+        clean_text = text.lower().replace("alexa", "").strip()
         
         with st.chat_message("assistant"):
-            with st.spinner("Nexa is thinking..."):
+            with st.spinner("Alexa is thinking..."):
                 response = client.chat.completions.create(
                     model="openai/gpt-3.5-turbo",
                     messages=[{"role": "user", "content": clean_text}]
