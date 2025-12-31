@@ -272,8 +272,8 @@ with col2:
     
     text = speech_to_text(
         language='en', 
-        start_prompt="🎤 Tap to Speak", 
-        stop_prompt="🎧 Listening...", 
+        start_prompt="✨ Whisper to NeuralFlex", 
+        stop_prompt="🌊 Receiving your voice...", 
         just_once=True,
         key="voice_input"
     )
