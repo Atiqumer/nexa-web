@@ -88,7 +88,7 @@ if text:
         with st.chat_message("assistant", avatar="🤖"):
             with st.spinner("Refining response..."):
                 response = client.chat.completions.create(
-                    model="openai/gpt-oss-120b:free",
+                    model="openai/gpt-oss-120b",
                     messages=[{"role": "user", "content": clean_text}]
                 )
                 answer = response.choices[0].message.content
