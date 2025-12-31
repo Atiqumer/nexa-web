@@ -9,10 +9,10 @@ import os
 # =========================================================
 # CONFIG & AUTH
 # =========================================================
-st.set_page_config(page_title="Anexa Voice Assistant", page_icon="🧠", layout="centered")
+st.set_page_config(page_title="Nexa Pro", page_icon="✨", layout="centered")
 
 MODEL = "openai/gpt-4o-mini"
-WAKE_WORDS = ["anexa", "nexa"]
+WAKE_WORDS = ["nexa"]
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -50,7 +50,7 @@ def extract_command(text):
 # =========================================================
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap');
 
 * { font-family: 'Space Grotesk', sans-serif; }
 
@@ -60,21 +60,23 @@ st.markdown("""
 }
 
 /* ChatGPT Style Voice Orb */
-.orb-container {
+.interaction-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    padding: 60px 0;
+    justify-content: center;
+    padding: 40px 0;
     position: relative;
 }
 
 .voice-orb {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
     border-radius: 50%;
-    box-shadow: 0 0 60px rgba(124, 58, 237, 0.6);
+    box-shadow: 0 0 80px rgba(124, 58, 237, 0.4);
     animation: breathe 4s ease-in-out infinite;
+    position: relative;
     z-index: 1;
 }
 
@@ -82,17 +84,18 @@ st.markdown("""
 .voice-orb::after {
     content: '';
     position: absolute;
-    width: 150px;
-    height: 150px;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
     border-radius: 50%;
-    border: 3px solid rgba(124, 58, 237, 0.4);
-    animation: ripple 2s linear infinite;
+    border: 2px solid rgba(124, 58, 237, 0.5);
+    animation: ripple 2.5s linear infinite;
     z-index: 0;
 }
 
 @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 80px rgba(124, 58, 237, 0.8); }
+    0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(124, 58, 237, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 100px rgba(124, 58, 237, 0.7); }
 }
 
 @keyframes ripple {
@@ -100,7 +103,7 @@ st.markdown("""
     100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Hide and Overlay Mic Button */
+/* Overlay Mic Button Precisely */
 div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
     position: absolute;
     top: 50%;
@@ -110,19 +113,29 @@ div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
 }
 
 div.stButton > button {
-    width: 160px !important;
-    height: 160px !important;
+    width: 200px !important;
+    height: 200px !important;
     opacity: 0 !important;
     cursor: pointer;
     border-radius: 50%;
+    border: none !important;
 }
 
 /* Glassmorphism Chat Bubbles */
 [data-testid="stChatMessage"] {
-    background: rgba(255, 255, 255, 0.04) !important;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.status-text {
+    text-align: center;
+    opacity: 0.6;
+    font-weight: 300;
+    letter-spacing: 1px;
+    margin-top: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -130,8 +143,8 @@ div.stButton > button {
 # =========================================================
 # MAIN APP FLOW
 # =========================================================
-st.title("〰️ ANEXA Voice Assistant")
-st.caption("Advanced Voice AI System")
+st.markdown("<h1 style='text-align: center; margin-bottom: 0;'>✨ NEXA PRO</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; opacity: 0.7; font-weight: 300;'>Experience the future of Neural Interaction</p>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -143,12 +156,15 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # Render Interactive UI
-st.markdown('<div class="orb-container"><div class="voice-orb"></div></div>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; opacity: 0.7;'>Tap the Start Recording & say <b>\"Anexa\"</b></p>", unsafe_allow_html=True)
+st.markdown('<div class="interaction-container"><div class="voice-orb"></div>', unsafe_allow_html=True)
 
-# Functional Mic Trigger
+# Functional Mic Trigger (Hidden but clickable over the orb)
 text = speech_to_text(language="en", just_once=True, key="voice_trigger")
 
+st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("<p class='status-text'>TAP THE ORB & SAY \"NEXA\"</p>", unsafe_allow_html=True)
+
+# Processing Logic
 if text:
     st.session_state.messages.append({"role": "user", "content": text})
     with st.chat_message("user", avatar=":material/person:"):
@@ -157,18 +173,18 @@ if text:
     command = extract_command(text)
     
     if not command:
-        resp = "💡 I'm listening. Use **Anexa**  to give a command."
+        resp = "💡 System is ready. Please include the wake word **Nexa** in your request."
         st.session_state.messages.append({"role": "assistant", "content": resp})
         with st.chat_message("assistant", avatar=":material/smart_toy:"):
             st.markdown(resp)
     else:
         with st.chat_message("assistant", avatar=":material/smart_toy:"):
-            with st.spinner("⚡ Connecting to Neural Link..."):
+            with st.spinner("⚡ Processing Neural Patterns..."):
                 try:
                     chat_completion = client.chat.completions.create(
                         model=MODEL,
                         messages=st.session_state.messages,
-                        temperature=0.7
+                        temperature=0.6
                     )
                     ans = chat_completion.choices[0].message.content
                     st.markdown(ans)
