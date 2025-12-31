@@ -379,7 +379,7 @@ if text:
             with st.spinner("⚡ Processing neural signals..."):
                 try:
                     response = client.chat.completions.create(
-                        model="google/gemini-2.5-flash",
+                        model="openai/gpt-4o-mini",
                         messages=[{"role": "user", "content": clean_text}]
                     )
                     answer = response.choices[0].message.content
