@@ -1,10 +1,8 @@
 import streamlit as st
 from streamlit_mic_recorder import speech_to_text
-from streamlit_lottie import st_lottie
 from openai import OpenAI
 from gtts import gTTS
 import base64
-import requests
 import uuid
 import os
 
@@ -12,17 +10,16 @@ import os
 # 1. APP CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="NeuralFlex Pro",
+    page_title="NeuralFlex",
     page_icon="🌙",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
 MODEL_NAME = "openai/gpt-4o-mini"
 WAKE_WORDS = ["alexa", "nexa"]
 
 # =========================================================
-# 2. CLIENT
+# 2. OPENROUTER CLIENT
 # =========================================================
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -30,70 +27,140 @@ client = OpenAI(
 )
 
 # =========================================================
-# 3. HELPERS
-# =========================================================
-def load_lottie(url: str):
-    try:
-        r = requests.get(url, timeout=10)
-        return r.json() if r.status_code == 200 else None
-    except:
-        return None
-
-
-def speak_web(text: str):
-    try:
-        filename = f"speech_{uuid.uuid4().hex}.mp3"
-        tts = gTTS(text=text, lang="en")
-        tts.save(filename)
-
-        with open(filename, "rb") as f:
-            audio_bytes = f.read()
-        b64 = base64.b64encode(audio_bytes).decode()
-
-        st.markdown(
-            f"""
-            <audio autoplay>
-                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """,
-            unsafe_allow_html=True
-        )
-
-        os.remove(filename)
-    except Exception as e:
-        st.error(f"🔊 Audio error: {e}")
-
-
-def extract_command(text: str):
-    lower = text.lower()
-    for word in WAKE_WORDS:
-        if word in lower:
-            return lower.replace(word, "").strip()
-    return None
-
-# =========================================================
-# 4. SESSION STATE
+# 3. SESSION STATE
 # =========================================================
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "listening" not in st.session_state:
-    st.session_state.listening = False
+# =========================================================
+# 4. HELPERS
+# =========================================================
+def extract_command(text):
+    text = text.lower()
+    for word in WAKE_WORDS:
+        if word in text:
+            return text.replace(word, "").strip()
+    return None
+
+
+def speak(text):
+    filename = f"speech_{uuid.uuid4().hex}.mp3"
+    gTTS(text=text, lang="en").save(filename)
+
+    with open(filename, "rb") as f:
+        audio = base64.b64encode(f.read()).decode()
+
+    st.markdown(
+        f"""
+        <audio autoplay>
+            <source src="data:audio/mp3;base64,{audio}" type="audio/mp3">
+        </audio>
+        """,
+        unsafe_allow_html=True
+    )
+
+    os.remove(filename)
 
 # =========================================================
-# 5. STYLES (UNCHANGED CORE, CLEANED JS TARGETS)
+# 5. COZY UI STYLE
 # =========================================================
-st.markdown("""<style>
-/* ---- SAME STYLE AS YOURS (trimmed for brevity) ---- */
-/* IMPORTANT FIX: waveform-container ID added */
-.waveform-container { cursor: pointer; }
-</style>""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap');
+
+* { font-family: 'Space Grotesk', sans-serif; }
+
+.stApp {
+    background: radial-gradient(circle at top, #1b1f3b, #070b1f);
+    color: #eaeaff;
+}
+
+.cozy-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(18px);
+    border-radius: 28px;
+    padding: 35px;
+    border: 1px solid rgba(167,139,250,0.25);
+    box-shadow: 0 0 45px rgba(139,92,246,0.25);
+    max-width: 420px;
+    margin: auto;
+}
+
+.orb {
+    width: 140px;
+    height: 140px;
+    margin: auto;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
+    box-shadow: 0 0 40px #8b5cf6;
+    animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,100% { transform: translateY(0px); }
+    50% { transform: translateY(-14px); }
+}
+
+.wave {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    height: 70px;
+    margin: 25px 0;
+}
+
+.wave span {
+    width: 6px;
+    background: linear-gradient(#a78bfa, #7c3aed);
+    border-radius: 10px;
+    animation: wave 1.2s infinite ease-in-out;
+}
+
+.wave span:nth-child(odd) { animation-delay: .2s; }
+.wave span:nth-child(even) { animation-delay: .4s; }
+
+@keyframes wave {
+    0%,100% { height: 20%; opacity: .5; }
+    50% { height: 100%; opacity: 1; }
+}
+
+.mic-btn {
+    width: 90px;
+    height: 90px;
+    margin: auto;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f472b6, #ec4899);
+    box-shadow: 0 0 25px #ec4899;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    cursor: pointer;
+    transition: transform .2s ease;
+}
+
+.mic-btn:hover {
+    transform: scale(1.1);
+}
+
+.status {
+    text-align: center;
+    margin-top: 15px;
+    letter-spacing: .1em;
+    opacity: .85;
+}
+
+[data-testid="stButton"] button {
+    display: none;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================================================
 # 6. HEADER
 # =========================================================
-st.title("🌙 NeuralFlex")
-st.caption("Neural Voice Interface • AI Powered")
+st.markdown("<h1 style='text-align:center'>🌙 NeuralFlex</h1>", unsafe_allow_html=True)
+st.caption("Cozy Neural Voice Interface")
 
 # =========================================================
 # 7. CHAT HISTORY
@@ -103,29 +170,32 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # =========================================================
-# 8. ORB + WAVEFORM
+# 8. COZY VOICE UI
 # =========================================================
-lottie_orb = load_lottie(
-    "https://lottie.host/70366657-3069-42b4-84d7-0130985559c5/X6fB1tJk2f.json"
-)
-
-if lottie_orb:
-    st_lottie(lottie_orb, height=150)
-
 st.markdown("""
-<div id="waveform" class="waveform-container"
-     onclick="document.getElementById('hidden-btn').click()">
-    <div class="audio-visualizer">
-        """ + "".join("<div class='bar'></div>" for _ in range(9)) + """
+<div class="cozy-card">
+    <div class="orb"></div>
+
+    <div class="wave">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span>
     </div>
-    <div class="status-text" id="statusText">Tap to Speak</div>
+
+    <div class="mic-btn" onclick="document.getElementById('hidden').click()">
+        🎙️
+    </div>
+
+    <div class="status" id="statusText">
+        Tap to speak (say Alexa or Nexa)
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
 # =========================================================
-# 9. SPEECH INPUT (HIDDEN BUTTON)
+# 9. HIDDEN BUTTON + SPEECH INPUT
 # =========================================================
-st.button("hidden", key="hidden-btn")
+st.button("hidden", key="hidden")
 
 text = speech_to_text(
     language="en",
@@ -142,41 +212,35 @@ if text:
     command = extract_command(text)
 
     if not command:
-        reminder = "🌙 Say **Alexa** or **Nexa** followed by your command."
-        st.session_state.messages.append({"role": "assistant", "content": reminder})
+        reply = "🌙 Please say **Alexa** or **Nexa** before your command."
+        st.session_state.messages.append({"role": "assistant", "content": reply})
         with st.chat_message("assistant", avatar="🤖"):
-            st.markdown(reminder)
+            st.markdown(reply)
     else:
         with st.chat_message("assistant", avatar="🤖"):
-            with st.spinner("⚡ Neural processing..."):
-                try:
-                    response = client.chat.completions.create(
-                        model=MODEL_NAME,
-                        temperature=0.6,
-                        messages=st.session_state.messages
-                    )
-                    answer = response.choices[0].message.content
-                    st.markdown(answer)
-                    speak_web(answer)
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": answer}
-                    )
-                except Exception as e:
-                    st.error(f"❌ Neural error: {e}")
+            with st.spinner("⚡ Thinking..."):
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    temperature=0.6,
+                    messages=st.session_state.messages
+                )
 
-# =========================================================
-# 11. JS – FIXED & CLEAN
-# =========================================================
+                answer = response.choices[0].message.content
+                st.markdown(answer)
+                speak(answer)
+
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": answer}
+                )
+
 st.markdown("""
 <script>
-const wf = document.getElementById("waveform");
-const statusText = document.getElementById("statusText");
+const status = document.getElementById("statusText");
+const mic = document.querySelector(".mic-btn");
 
-wf.addEventListener("click", () => {
-    wf.classList.toggle("recording");
-    statusText.textContent = wf.classList.contains("recording")
-        ? "Listening..."
-        : "Tap to Speak";
+mic.addEventListener("click", () => {
+    status.innerText = "Listening...";
+    mic.style.boxShadow = "0 0 40px #ef4444";
 });
 </script>
 """, unsafe_allow_html=True)
