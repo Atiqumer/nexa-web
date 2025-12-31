@@ -52,25 +52,58 @@ st.markdown("""
                     inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
     }
 
-    /* Mic Button Styling */
+    /* Hide default mic button completely */
     div.stButton > button {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05)) !important;
-        backdrop-filter: blur(10px) !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
-        color: #ffffff !important;
-        border-radius: 50px !important;
-        padding: 16px 32px !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        width: 100% !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        display: none !important;
     }
     
-    div.stButton > button:hover {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1)) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+    /* Custom Mic Icon Button */
+    .mic-button {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+                    inset 0 0 20px rgba(255, 255, 255, 0.1);
+        margin: 0 auto;
+    }
+    
+    .mic-button:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3),
+                    inset 0 0 25px rgba(255, 255, 255, 0.15);
+    }
+    
+    .mic-button:active {
+        transform: scale(0.95);
+    }
+    
+    .mic-icon {
+        font-size: 2.5rem;
+        animation: micPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes micPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    
+    .listening-state .mic-icon {
+        animation: listening 0.8s ease-in-out infinite;
+        color: #4caf50;
+    }
+    
+    @keyframes listening {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
     }
     
     /* Title Styling */
@@ -270,10 +303,19 @@ with col2:
             </div>
         """, unsafe_allow_html=True)
     
+    # Custom mic icon (the speech_to_text component will still work, but styled as icon)
+    st.markdown("""
+        <div style="text-align: center; margin-top: 1rem;">
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1rem;">
+                Click the microphone to speak
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+    
     text = speech_to_text(
         language='en', 
-        start_prompt="✨ Whisper to NeuralFlex", 
-        stop_prompt="🌊 Receiving your voice...", 
+        start_prompt="🎙️", 
+        stop_prompt="🔴", 
         just_once=True,
         key="voice_input"
     )
