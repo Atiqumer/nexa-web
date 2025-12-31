@@ -3,7 +3,6 @@ from streamlit_mic_recorder import speech_to_text
 from openai import OpenAI
 from gtts import gTTS
 import base64
-import requests
 import uuid
 import os
 
@@ -12,10 +11,9 @@ import os
 # =========================================================
 st.set_page_config(page_title="NeuralFlex Pro", page_icon="🌙", layout="centered")
 
-MODEL = "openai/gpt-4o-mini"  # High-performance standard model
+MODEL = "openai/gpt-4o-mini"
 WAKE_WORDS = ["alexa", "nexa"]
 
-# OpenRouter setup
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=st.secrets["OPENROUTER_API_KEY"]
@@ -48,7 +46,7 @@ def extract_command(text):
     return None
 
 # =========================================================
-# PREMIUM CHATGPT-STYLE UI
+# PREMIUM UI STYLING
 # =========================================================
 st.markdown("""
 <style>
@@ -61,48 +59,48 @@ st.markdown("""
     color: white;
 }
 
-/* ChatGPT Voice Orb Styling */
+/* ChatGPT Style Voice Orb */
 .orb-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 50px 0;
+    padding: 60px 0;
     position: relative;
 }
 
 .voice-orb {
-    width: 140px;
-    height: 140px;
+    width: 150px;
+    height: 150px;
     background: radial-gradient(circle at 30% 30%, #c4b5fd, #7c3aed);
     border-radius: 50%;
-    box-shadow: 0 0 50px rgba(124, 58, 237, 0.5);
+    box-shadow: 0 0 60px rgba(124, 58, 237, 0.6);
     animation: breathe 4s ease-in-out infinite;
     z-index: 1;
 }
 
-/* Ripple Animation */
+/* Ripple effect */
 .voice-orb::after {
     content: '';
     position: absolute;
-    width: 140px;
-    height: 140px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    border: 2px solid #7c3aed;
+    border: 3px solid rgba(124, 58, 237, 0.4);
     animation: ripple 2s linear infinite;
     z-index: 0;
 }
 
 @keyframes breathe {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); }
-    50% { transform: scale(1.08); box-shadow: 0 0 70px rgba(124, 58, 237, 0.8); }
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 80px rgba(124, 58, 237, 0.8); }
 }
 
 @keyframes ripple {
     0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(2); opacity: 0; }
+    100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* Hide the actual speech_to_text button and overlay it on the Orb */
+/* Hide and Overlay Mic Button */
 div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
     position: absolute;
     top: 50%;
@@ -112,18 +110,19 @@ div[data-testid="stVerticalBlock"] > div:has(div.stButton) {
 }
 
 div.stButton > button {
-    width: 150px !important;
-    height: 150px !important;
-    opacity: 0 !important; /* Makes the functional button invisible */
+    width: 160px !important;
+    height: 160px !important;
+    opacity: 0 !important;
     cursor: pointer;
+    border-radius: 50%;
 }
 
-/* Glassmorphism Chat */
+/* Glassmorphism Chat Bubbles */
 [data-testid="stChatMessage"] {
-    background: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(10px);
-    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    backdrop-filter: blur(15px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -131,41 +130,40 @@ div.stButton > button {
 # =========================================================
 # MAIN APP FLOW
 # =========================================================
-st.title("🌙 NeuralFlex")
-st.caption("Next-Gen Voice Intelligence")
+st.title("🌙 NeuralFlex Pro")
+st.caption("Advanced Voice AI System")
 
-# 1. Load Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Using Material Symbols for Avatars
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"], avatar="🤖" if msg["role"]=="assistant" else "👤"):
+    avatar = ":material/smart_toy:" if msg["role"] == "assistant" else ":material/person:"
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
-# 2. Render Orb UI
+# Render Interactive UI
 st.markdown('<div class="orb-container"><div class="voice-orb"></div></div>', unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; opacity: 0.6;'>Tap the orb & say \"Alexa\"</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; opacity: 0.7;'>Tap the Orb & say <b>\"Alexa\"</b></p>", unsafe_allow_html=True)
 
-# 3. Hidden Microphone Trigger
-# This functional button is perfectly centered over the visual Orb
+# Functional Mic Trigger
 text = speech_to_text(language="en", just_once=True, key="voice_trigger")
 
-# 4. Processing Logic
 if text:
     st.session_state.messages.append({"role": "user", "content": text})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user", avatar=":material/person:"):
         st.markdown(text)
 
     command = extract_command(text)
     
     if not command:
-        response_msg = "🌙 I'm listening. Please start your request with **Alexa** or **Nexa**."
-        st.session_state.messages.append({"role": "assistant", "content": response_msg})
-        with st.chat_message("assistant", avatar="🤖"):
-            st.markdown(response_msg)
+        resp = "🌙 I'm listening. Use **Alexa** or **Nexa** to give a command."
+        st.session_state.messages.append({"role": "assistant", "content": resp})
+        with st.chat_message("assistant", avatar=":material/smart_toy:"):
+            st.markdown(resp)
     else:
-        with st.chat_message("assistant", avatar="🤖"):
-            with st.spinner("⚡ Processing Neural Patterns..."):
+        with st.chat_message("assistant", avatar=":material/smart_toy:"):
+            with st.spinner("⚡ Connecting to Neural Link..."):
                 try:
                     chat_completion = client.chat.completions.create(
                         model=MODEL,
@@ -174,7 +172,7 @@ if text:
                     )
                     ans = chat_completion.choices[0].message.content
                     st.markdown(ans)
-                    speak(ans) # Voice output
+                    speak(ans)
                     st.session_state.messages.append({"role": "assistant", "content": ans})
                 except Exception as e:
-                    st.error(f"Neural Link Error: {e}")
+                    st.error(f"Neural Error: {e}")
